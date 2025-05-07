@@ -53,6 +53,62 @@
       color: #13d755;
       transform: scale(1.2);
     }
+
+    .update-time {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+    
+    /* New styles for additional content */
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    
+    .status-active {
+      background-color: #13d755;
+    }
+    
+    .status-idle {
+      background-color: #6c757d;
+    }
+    
+    .water-usage-card {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .water-drop {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-color: rgba(19, 215, 85, 0.1);
+      border-radius: 50%;
+      top: -30px;
+      right: -30px;
+    }
+    
+    .system-health {
+      height: 8px;
+      border-radius: 4px;
+      background-color: #e9ecef;
+      overflow: hidden;
+    }
+    
+    .health-bar {
+      height: 100%;
+      background-color: #13d755;
+      width: 95%;
+    }
+    
+    .quick-action-btn {
+      border-radius: 12px;
+      padding: 10px 15px;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -66,20 +122,25 @@
   </div>
 
   <!-- Welcome Message -->
-  <h4 class="mb-4 fw-semibold" id="welcomeMessage">Welcome!</h4>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0 fw-semibold" id="welcomeMessage">Welcome!</h4>
+    <div class="system-health">
+      <div class="health-bar"></div>
+    </div>
+  </div>
 
   <!-- Real-time Status Board -->
   <div class="row mb-4">
-    <div class="col-4">
+    <div class="col-6 col-md-3 mb-3">
       <div class="card theme-card text-center p-2">
         <div class="card-body">
           <i class="bi bi-moisture fs-4"></i>
           <h6 class="my-1">Soil Moisture</h6>
-          <h4 class="mb-0" id="soilMoisture">--</h4>
+          <h4 class="mb-0" id="soilMoisture">--%</h4>
         </div>
       </div>
     </div>
-    <div class="col-4">
+    <div class="col-6 col-md-3 mb-3">
       <div class="card theme-card text-center p-2">
         <div class="card-body">
           <i class="bi bi-thermometer-half fs-4"></i>
@@ -88,7 +149,7 @@
         </div>
       </div>
     </div>
-    <div class="col-4">
+    <div class="col-6 col-md-3 mb-3">
       <div class="card theme-card text-center p-2">
         <div class="card-body">
           <i class="bi bi-droplet-half fs-4"></i>
@@ -97,6 +158,67 @@
         </div>
       </div>
     </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card theme-card text-center p-2">
+        <div class="card-body">
+          <i class="bi bi-power fs-4"></i>
+          <h6 class="my-1">Pump Status</h6>
+          <h4 class="mb-0" id="pumpStatus">--</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <!-- Water Usage -->
+  <div class="row mb-4">
+    <div class="col-md-6 mb-3">
+      <div class="card theme-card p-3 water-usage-card">
+        <div class="water-drop"></div>
+        <h6 class="mb-3">Water Usage</h6>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h4 class="mb-0">42L</h4>
+            <small class="text-muted">Today's usage</small>
+          </div>
+          <div class="text-end">
+            <h4 class="mb-0">1.2kL</h4>
+            <small class="text-muted">This month</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="card theme-card p-3">
+        <h6 class="mb-3">System Status</h6>
+        <div class="mb-2 d-flex justify-content-between">
+          <span><span class="status-indicator status-active"></span>Main Controller</span>
+          <small class="text-success">Online</small>
+        </div>
+        <div class="mb-2 d-flex justify-content-between">
+          <span><span class="status-indicator status-active"></span>Moisture Sensor</span>
+          <small class="text-success">Online</small>
+        </div>
+        <div class="mb-2 d-flex justify-content-between">
+          <span><span class="status-indicator status-active"></span>Water Pump</span>
+          <small class="text-success">Online</small>
+        </div>
+        <div class="mb-2 d-flex justify-content-between">
+          <span><span class="status-indicator status-idle"></span>Weather API</span>
+          <small class="text-muted">Disabled</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Last Updated -->
+  <p class="text-center update-time">Last Updated: <span id="lastUpdated">--:--:--</span></p>
+  
+  <!-- Tips Section -->
+  <div class="card theme-card p-3 mb-4">
+    <h6 class="mb-3"><i class="bi bi-lightbulb me-2"></i>Watering Tip</h6>
+    <p class="mb-0" id="wateringTip">Early morning watering reduces evaporation and helps prevent plant diseases.</p>
   </div>
 </div>
 
@@ -119,13 +241,11 @@
     const themeIcon = document.getElementById('themeIcon');
     const body = document.body;
 
-    // Check for saved theme preference or use system preference
+    // Check for saved theme preference
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
     let isDark = savedTheme ? savedTheme === 'dark' : systemPrefersDark;
 
-    // Apply theme on load
     function applyTheme() {
       if (isDark) {
         body.setAttribute('data-theme', 'dark');
@@ -140,43 +260,63 @@
 
     applyTheme();
 
-    // Toggle theme on button click
     themeToggle.addEventListener('click', () => {
       isDark = !isDark;
       applyTheme();
     });
 
-    // Set Welcome Message
+    // Welcome Message
     const welcomeMessage = document.getElementById('welcomeMessage');
-    const now = new Date();
-    const hour = now.getHours();
+    const hour = new Date().getHours();
     let greeting = 'Welcome';
 
-    if (hour < 12) {
-      greeting = 'Good Morning';
-    } else if (hour < 18) {
-      greeting = 'Good Afternoon';
-    } else {
-      greeting = 'Good Evening';
-    }
+    if (hour < 12) greeting = 'Good Morning';
+    else if (hour < 18) greeting = 'Good Afternoon';
+    else greeting = 'Good Evening';
 
     welcomeMessage.textContent = `${greeting}!`;
 
-    // Fetch Live Sensor Data
+    // Watering tips based on time
+    const wateringTip = document.getElementById('wateringTip');
+    const tips = [
+      "Water plants in the early morning to reduce evaporation.",
+      "Check soil moisture before watering to avoid overwatering.",
+      "Use mulch to retain soil moisture and reduce water needs.",
+      "Water at the base of plants to minimize leaf wetness and disease.",
+      "Adjust watering frequency based on seasonal weather changes."
+    ];
+    wateringTip.textContent = tips[Math.floor(Math.random() * tips.length)];
+
+    // Fetch Sensor Data
     async function fetchSensorData() {
       try {
-        const response = await fetch('/api/sensor-data');
-        const data = await response.json();
+        const token = 'ZLcZBsKlBLl8vq5YaSpvAezTnEMoOg2K';
 
-        document.getElementById('soilMoisture').textContent = data.soil_moisture + '%';
-        document.getElementById('temperature').textContent = data.temperature + '°C';
-        document.getElementById('humidity').textContent = data.humidity + '%';
+        const [moistureRes, tempRes, humidityRes, pumpRes] = await Promise.all([
+          fetch(`https://blynk.cloud/external/api/get?token=${token}&v0`),
+          fetch(`https://blynk.cloud/external/api/get?token=${token}&v1`),
+          fetch(`https://blynk.cloud/external/api/get?token=${token}&v2`),
+          fetch(`https://blynk.cloud/external/api/get?token=${token}&D4`)
+        ]);
+
+        const soilMoisture = await moistureRes.text();
+        const temperature = await tempRes.text();
+        const humidity = await humidityRes.text();
+        const pumpValue = await pumpRes.text();
+
+        document.getElementById('soilMoisture').textContent = soilMoisture + '%';
+        document.getElementById('temperature').textContent = temperature + '°C';
+        document.getElementById('humidity').textContent = humidity + '%';
+        document.getElementById('pumpStatus').textContent = pumpValue === "1" ? "Active" : "Idle";
+
+        const currentTime = new Date().toLocaleTimeString();
+        document.getElementById('lastUpdated').textContent = currentTime;
+
       } catch (error) {
-        console.error('Error fetching sensor data:', error);
+        console.error('Error fetching Blynk sensor data:', error);
       }
     }
 
-    // Initial fetch and set interval for updates
     fetchSensorData();
     setInterval(fetchSensorData, 60000); // Update every 60 seconds
   });
