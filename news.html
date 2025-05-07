@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Irrigation - News</title>
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --light-bg: #ffffff;
+      --dark-bg: #212529;
+      --light-text: #212529;
+      --dark-text: #f8f9fa;
+      --card-bg-light: #ffffff;
+      --card-bg-dark: #343a40;
+    }
+
+    body {
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body[data-theme="dark"] {
+      background-color: var(--dark-bg);
+      color: var(--dark-text);
+    }
+
+    body[data-theme="light"] {
+      background-color: var(--light-bg);
+      color: var(--light-text);
+    }
+
+    .info-card {
+      background-color: var(--card-bg-light);
+      border-radius: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: 0.3s ease;
+    }
+
+    body[data-theme="dark"] .info-card {
+      background-color: var(--card-bg-dark);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .info-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .icon-btn {
+      font-size: 2rem;
+      color: #13d755;
+    }
+
+    .bottom-nav {
+      background-color: var(--card-bg-light);
+      height: 60px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+
+    body[data-theme="dark"] .bottom-nav {
+      background-color: var(--card-bg-dark);
+    }
+
+    .nav-icon {
+      font-size: 1.5rem;
+      color: #6c757d;
+    }
+
+    .nav-icon.active {
+      color: #13d755;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container py-3">
+  <!-- Header with Theme Toggle -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-semibold mb-0">News & Info</h4>
+    <button class="btn btn-link" id="themeToggle">
+      <i class="bi" id="themeIcon"></i>
+    </button>
+  </div>
+
+  <!-- Section Grid -->
+  <div class="row g-4">
+    <div class="col-6">
+      <div class="card info-card text-center p-3">
+        <i class="bi bi-newspaper icon-btn mb-2"></i>
+        <h6 class="fw-semibold">News</h6>
+        <p class="small">Get the latest farming updates.</p>
+        <button class="btn btn-sm btn-outline-success" onclick="showNews()">Read</button>
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="card info-card text-center p-3">
+        <i class="bi bi-cloud-sun icon-btn mb-2"></i>
+        <h6 class="fw-semibold">Weather</h6>
+        <p class="small">Sensor-based weather conditions.</p>
+        <button class="btn btn-sm btn-outline-success" onclick="showWeather()">Check</button>
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="card info-card text-center p-3">
+        <i class="bi bi-people icon-btn mb-2"></i>
+        <h6 class="fw-semibold">Community</h6>
+        <p class="small">Connect with other farmers.</p>
+        <button class="btn btn-sm btn-outline-success" onclick="showCommunity()">Join</button>
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="card info-card text-center p-3">
+        <i class="bi bi-lightbulb icon-btn mb-2"></i>
+        <h6 class="fw-semibold">Daily Tip</h6>
+        <p class="small" id="dailyTip">Tip will load...</p>
+        <button class="btn btn-sm btn-outline-success" onclick="newTip()">New Tip</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="navbar fixed-bottom bottom-nav p-2">
+  <div class="d-flex justify-content-around w-100">
+    <a href="home.html"><i class="bi bi-house-door nav-icon"></i></a>
+    <a href="control.html"><i class="bi bi-sliders nav-icon"></i></a>
+    <a href="news.html"><i class="bi bi-graph-up nav-icon active"></i></a>
+    <a href="notification.html"><i class="bi bi-chat-dots nav-icon"></i></a>
+    <a href="settings.html"><i class="bi bi-gear nav-icon"></i></a>
+  </div>
+</nav>
+
+<!-- Script for tips, theme toggle, and section logic -->
+<script>
+  const tips = [
+    "Water early in the morning to reduce evaporation.",
+    "Use mulch to retain soil moisture.",
+    "Monitor plant health regularly.",
+    "Rotate crops for better soil quality.",
+    "Avoid overwatering during rainy days."
+  ];
+
+  function newTip() {
+    const tip = tips[Math.floor(Math.random() * tips.length)];
+    document.getElementById("dailyTip").textContent = tip;
+  }
+
+  function showWeather() {
+    alert("🌡 Temperature: 26°C\n💧 Humidity: 58%\n🌱 Moisture: 40%");
+  }
+
+  function showNews() {
+    alert("📰 Organic farming sees a 20% rise.\n🚜 New irrigation subsidies announced.");
+  }
+
+  function showCommunity() {
+    alert("👨‍🌾 Join the Smart Farming Group:\nhttps://t.me/smartfarmers");
+  }
+
+  // Dark mode logic
+  document.addEventListener('DOMContentLoaded', () => {
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const body = document.body;
+
+    let theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    body.setAttribute('data-theme', theme);
+    themeIcon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+
+    themeToggle.addEventListener('click', () => {
+      theme = (theme === 'dark') ? 'light' : 'dark';
+      body.setAttribute('data-theme', theme);
+      themeIcon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+      localStorage.setItem('theme', theme);
+    });
+
+    newTip();
+  });
+</script>
+
+</body>
+</html>
