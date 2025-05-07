@@ -109,6 +109,10 @@
       padding: 10px 15px;
       font-size: 0.9rem;
     }
+    
+    .progress-thin {
+      height: 6px;
+    }
   </style>
 </head>
 <body>
@@ -169,7 +173,18 @@
     </div>
   </div>
 
-  
+  <!-- Quick Actions -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card theme-card p-3">
+        <h6 class="mb-3">Quick Actions</h6>
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-outline-success quick-action-btn" id="waterNowBtn">
+            <i class="bi bi-droplet-fill me-2"></i>Water Now
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Water Usage -->
   <div class="row mb-4">
@@ -177,14 +192,31 @@
       <div class="card theme-card p-3 water-usage-card">
         <div class="water-drop"></div>
         <h6 class="mb-3">Water Usage</h6>
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h4 class="mb-0">42L</h4>
-            <small class="text-muted">Today's usage</small>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span>Today</span>
+            <span id="todayUsage">0L</span>
           </div>
-          <div class="text-end">
-            <h4 class="mb-0">1.2kL</h4>
-            <small class="text-muted">This month</small>
+          <div class="progress progress-thin">
+            <div class="progress-bar bg-success" id="todayProgress" role="progressbar" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span>This Week</span>
+            <span id="weekUsage">0L</span>
+          </div>
+          <div class="progress progress-thin">
+            <div class="progress-bar bg-info" id="weekProgress" role="progressbar" style="width: 0%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="d-flex justify-content-between mb-1">
+            <span>This Month</span>
+            <span id="monthUsage">0L</span>
+          </div>
+          <div class="progress progress-thin">
+            <div class="progress-bar bg-primary" id="monthProgress" role="progressbar" style="width: 0%"></div>
           </div>
         </div>
       </div>
@@ -241,6 +273,104 @@
     const themeIcon = document.getElementById('themeIcon');
     const body = document.body;
 
+    // Water usage tracking variables
+    let waterUsage = {
+      today: 0,       // in liters
+      week: 0,        // in liters
+      month: 0,       // in liters
+      lastUpdated: null,
+      pumpActive: false,
+      pumpStartTime: null,
+      flowRate: 2.5   // liters per minute (adjust based on your pump)
+    };
+
+    // Load saved water usage from localStorage
+    function loadWaterUsage() {
+      const savedUsage = localStorage.getItem('waterUsage');
+      if (savedUsage) {
+        const parsed = JSON.parse(savedUsage);
+        
+        // Check if the saved data is from today
+        const today = new Date().toDateString();
+        if (parsed.lastUpdated === today) {
+          waterUsage.today = parsed.today || 0;
+          waterUsage.week = parsed.week || 0;
+          waterUsage.month = parsed.month || 0;
+        } else {
+          // Reset daily usage if it's a new day
+          waterUsage.today = 0;
+          waterUsage.week = parsed.week || 0;
+          waterUsage.month = parsed.month || 0;
+        }
+        
+        waterUsage.lastUpdated = today;
+      }
+      updateWaterUsageDisplay();
+    }
+
+    // Save water usage to localStorage
+    function saveWaterUsage() {
+      waterUsage.lastUpdated = new Date().toDateString();
+      localStorage.setItem('waterUsage', JSON.stringify({
+        today: waterUsage.today,
+        week: waterUsage.week,
+        month: waterUsage.month,
+        lastUpdated: waterUsage.lastUpdated
+      }));
+    }
+
+    // Update water usage display
+    function updateWaterUsageDisplay() {
+      document.getElementById('todayUsage').textContent = waterUsage.today.toFixed(1) + 'L';
+      document.getElementById('weekUsage').textContent = waterUsage.week.toFixed(1) + 'L';
+      document.getElementById('monthUsage').textContent = waterUsage.month.toFixed(1) + 'L';
+      
+      // Update progress bars (assuming 50L daily max, 350L weekly max, 1500L monthly max)
+      document.getElementById('todayProgress').style.width = Math.min(waterUsage.today / 50 * 100, 100) + '%';
+      document.getElementById('weekProgress').style.width = Math.min(waterUsage.week / 350 * 100, 100) + '%';
+      document.getElementById('monthProgress').style.width = Math.min(waterUsage.month / 1500 * 100, 100) + '%';
+    }
+
+    // Track pump activity and calculate water usage
+    function trackPumpActivity(isActive) {
+      const now = new Date();
+      
+      if (isActive && !waterUsage.pumpActive) {
+        // Pump just turned on
+        waterUsage.pumpActive = true;
+        waterUsage.pumpStartTime = now;
+      } else if (!isActive && waterUsage.pumpActive) {
+        // Pump just turned off - calculate usage
+        waterUsage.pumpActive = false;
+        if (waterUsage.pumpStartTime) {
+          const duration = (now - waterUsage.pumpStartTime) / 60000; // minutes
+          const usage = duration * waterUsage.flowRate;
+          
+          waterUsage.today += usage;
+          waterUsage.week += usage;
+          waterUsage.month += usage;
+          
+          updateWaterUsageDisplay();
+          saveWaterUsage();
+        }
+      }
+    }
+
+    // Manual water now button
+    document.getElementById('waterNowBtn').addEventListener('click', function() {
+      // This would trigger an API call to activate the pump in a real implementation
+      alert("Manual watering would be activated here. In this demo, it simulates 1 minute of watering.");
+      
+      // Simulate 1 minute of watering
+      const usage = 1 * waterUsage.flowRate;
+      waterUsage.today += usage;
+      waterUsage.week += usage;
+      waterUsage.month += usage;
+      
+      updateWaterUsageDisplay();
+      saveWaterUsage();
+    });
+
     // Check for saved theme preference
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -287,6 +417,9 @@
     ];
     wateringTip.textContent = tips[Math.floor(Math.random() * tips.length)];
 
+    // Load initial water usage
+    loadWaterUsage();
+
     // Fetch Sensor Data
     async function fetchSensorData() {
       try {
@@ -307,7 +440,12 @@
         document.getElementById('soilMoisture').textContent = soilMoisture + '%';
         document.getElementById('temperature').textContent = temperature + '°C';
         document.getElementById('humidity').textContent = humidity + '%';
-        document.getElementById('pumpStatus').textContent = pumpValue === "1" ? "Active" : "Idle";
+        
+        const pumpActive = pumpValue === "1";
+        document.getElementById('pumpStatus').textContent = pumpActive ? "Active" : "Idle";
+        
+        // Track pump activity for water usage
+        trackPumpActivity(pumpActive);
 
         const currentTime = new Date().toLocaleTimeString();
         document.getElementById('lastUpdated').textContent = currentTime;
@@ -319,6 +457,17 @@
 
     fetchSensorData();
     setInterval(fetchSensorData, 60000); // Update every 60 seconds
+    
+    // Reset daily usage at midnight
+    function checkForDayChange() {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() === 0) {
+        waterUsage.today = 0;
+        updateWaterUsageDisplay();
+        saveWaterUsage();
+      }
+    }
+    setInterval(checkForDayChange, 60000); // Check every minute
   });
 </script>
 </body>
