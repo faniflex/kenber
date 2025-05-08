@@ -367,7 +367,7 @@
         const temp = await getBlynkPinValue(PINS.TEMPERATURE);
         const humidity = await getBlynkPinValue(PINS.HUMIDITY);
         
-        document.getElementById('soilMoisture').textContent = moisture || '--';
+        document.getElementById('soilMoisture').textContent = moisture ? `${moisture}%` : '--%';
         document.getElementById('temperature').textContent = temp ? `${temp}°C` : '--°C';
         document.getElementById('humidity').textContent = humidity ? `${humidity}%` : '--%';
       } catch (error) {
