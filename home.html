@@ -457,7 +457,842 @@
 
     fetchSensorData();
     setInterval(fetchSensorData, 60000); // Update every 60 seconds
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Irrigation - Home</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg-light: #ffffff;
+      --text-light: #212529;
+      --bg-dark: #212529;
+      --text-dark: #f8f9fa;
+    }
+
+    [data-theme="dark"] {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .theme-card {
+      background-color: var(--bg-light);
+      border-radius: 15px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    [data-theme="dark"] .theme-card {
+      background-color: #343a40;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .bottom-nav {
+      background-color: var(--bg-light);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      height: 60px;
+    }
+
+    [data-theme="dark"] .bottom-nav {
+      background-color: #343a40;
+    }
+
+    .nav-icon {
+      font-size: 1.5rem;
+      color: #6c757d;
+      transition: all 0.2s ease;
+    }
+
+    .nav-icon.active {
+      color: #13d755;
+      transform: scale(1.2);
+    }
+
+    .update-time {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
     
+    /* New styles for additional content */
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    
+    .status-active {
+      background-color: #13d755;
+    }
+    
+    .status-idle {
+      background-color: #6c757d;
+    }
+    
+    .water-usage-card {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .water-drop {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-color: rgba(19, 215, 85, 0.1);
+      border-radius: 50%;
+      top: -30px;
+      right: -30px;
+    }
+    
+    .system-health {
+      height: 8px;
+      border-radius: 4px;
+      background-color: #e9ecef;
+      overflow: hidden;
+    }
+    
+    .health-bar {
+      height: 100%;
+      background-color: #13d755;
+      width: 95%;
+    }
+    
+    .quick-action-btn {
+      border-radius: 12px;
+      padding: 10px 15px;
+      font-size: 0.9rem;
+    }
+    
+    .progress-thin {
+      height: 6px;
+    }
+    
+    /* Language selector styles */
+    .language-selector {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    
+    .language-btn {
+      background-color: #13d755;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .language-dropdown {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: none;
+    }
+    
+    [data-theme="dark"] .language-dropdown {
+      background-color: #343a40;
+    }
+    
+    .language-dropdown.show {
+      display: block;
+    }
+    
+    .language-option {
+      padding: 8px 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    
+    .language-option:hover {
+      background-color: #f8f9fa;
+    }
+    
+    [data-theme="dark"] .language-option:hover {
+      background-color: #495057;
+    }
+    
+    .language-flag {
+      width: 20px;
+      height: 15px;
+      margin-right: 10px;
+      object-fit: cover;
+    }
+    
+    .translated-content {
+      transition: opacity 0.3s ease;
+    }
+    
+    .translating {
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Language Selector -->
+<div class="language-selector">
+  <div class="language-btn" id="languageToggle">
+    <i class="bi bi-translate"></i>
+  </div>
+  <div class="language-dropdown" id="languageDropdown">
+    <div class="language-option" data-lang="en">
+      <img src="https://flagcdn.com/w20/gb.png" class="language-flag" alt="English">
+      English
+    </div>
+    <div class="language-option" data-lang="am">
+      <img src="https://flagcdn.com/w20/et.png" class="language-flag" alt="Amharic">
+      አማርኛ
+    </div>
+    <div class="language-option" data-lang="om">
+      <img src="https://flagcdn.com/w20/et.png" class="language-flag" alt="Oromo">
+      Afaan Oromoo
+    </div>
+    <div class="language-option" data-lang="ti">
+      <img src="https://flagcdn.com/w20/er.png" class="language-flag" alt="Tigrinya">
+      ትግርኛ
+    </div>
+  </div>
+</div>
+
+<div class="container py-4">
+  <!-- Theme Toggle -->
+  <div class="d-flex justify-content-end mb-2">
+    <button class="btn btn-link" id="themeToggle">
+      <i class="bi" id="themeIcon"></i>
+    </button>
+  </div>
+
+  <!-- Welcome Message -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0 fw-semibold" id="welcomeMessage">Welcome!</h4>
+    <div class="system-health">
+      <div class="health-bar"></div>
+    </div>
+  </div>
+
+  <!-- Real-time Status Board -->
+  <div class="row mb-4">
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card theme-card text-center p-2">
+        <div class="card-body">
+          <i class="bi bi-moisture fs-4"></i>
+          <h6 class="my-1" data-translate="soil_moisture">Soil Moisture</h6>
+          <h4 class="mb-0" id="soilMoisture">--%</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card theme-card text-center p-2">
+        <div class="card-body">
+          <i class="bi bi-thermometer-half fs-4"></i>
+          <h6 class="my-1" data-translate="temperature">Temperature</h6>
+          <h4 class="mb-0" id="temperature">--°C</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card theme-card text-center p-2">
+        <div class="card-body">
+          <i class="bi bi-droplet-half fs-4"></i>
+          <h6 class="my-1" data-translate="humidity">Humidity</h6>
+          <h4 class="mb-0" id="humidity">--%</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card theme-card text-center p-2">
+        <div class="card-body">
+          <i class="bi bi-power fs-4"></i>
+          <h6 class="my-1" data-translate="pump_status">Pump Status</h6>
+          <h4 class="mb-0" id="pumpStatus">--</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card theme-card p-3">
+        <h6 class="mb-3" data-translate="quick_actions">Quick Actions</h6>
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-outline-success quick-action-btn" id="waterNowBtn" data-translate="water_now">
+            <i class="bi bi-droplet-fill me-2"></i><span>Water Now</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Water Usage -->
+  <div class="row mb-4">
+    <div class="col-md-6 mb-3">
+      <div class="card theme-card p-3 water-usage-card">
+        <div class="water-drop"></div>
+        <h6 class="mb-3" data-translate="water_usage">Water Usage</h6>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span data-translate="today">Today</span>
+            <span id="todayUsage">0L</span>
+          </div>
+          <div class="progress progress-thin">
+            <div class="progress-bar bg-success" id="todayProgress" role="progressbar" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span data-translate="this_week">This Week</span>
+            <span id="weekUsage">0L</span>
+          </div>
+          <div class="progress progress-thin">
+            <div class="progress-bar bg-info" id="weekProgress" role="progressbar" style="width: 0%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="d-flex justify-content-between mb-1">
+            <span data-translate="this_month">This Month</span>
+            <span id="monthUsage">0L</span>
+          </div>
+          <div class="progress progress-thin">
+            <div class="progress-bar bg-primary" id="monthProgress" role="progressbar" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="card theme-card p-3">
+        <h6 class="mb-3" data-translate="system_status">System Status</h6>
+        <div class="mb-2 d-flex justify-content-between">
+          <span><span class="status-indicator status-active"></span><span data-translate="main_controller">Main Controller</span></span>
+          <small class="text-success" data-translate="online">Online</small>
+        </div>
+        <div class="mb-2 d-flex justify-content-between">
+          <span><span class="status-indicator status-active"></span><span data-translate="moisture_sensor">Moisture Sensor</span></span>
+          <small class="text-success" data-translate="online">Online</small>
+        </div>
+        <div class="mb-2 d-flex justify-content-between">
+          <span><span class="status-indicator status-active"></span><span data-translate="water_pump">Water Pump</span></span>
+          <small class="text-success" data-translate="online">Online</small>
+        </div>
+        <div class="mb-2 d-flex justify-content-between">
+          <span><span class="status-indicator status-idle"></span><span data-translate="weather_api">Weather API</span></span>
+          <small class="text-muted" data-translate="disabled">Disabled</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Last Updated -->
+  <p class="text-center update-time"><span data-translate="last_updated">Last Updated</span>: <span id="lastUpdated">--:--:--</span></p>
+  
+  <!-- Tips Section -->
+  <div class="card theme-card p-3 mb-4">
+    <h6 class="mb-3"><i class="bi bi-lightbulb me-2"></i><span data-translate="watering_tip">Watering Tip</span></h6>
+    <p class="mb-0" id="wateringTip" data-translate="default_tip">Early morning watering reduces evaporation and helps prevent plant diseases.</p>
+  </div>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="navbar fixed-bottom bottom-nav p-2">
+  <div class="d-flex justify-content-around w-100">
+    <a href="home.html"><i class="bi bi-house-door-fill nav-icon active"></i></a>
+    <a href="control.html"><i class="bi bi-sliders nav-icon"></i></a>
+    <a href="news.html"><i class="bi bi-graph-up nav-icon"></i></a>
+    <a href="notification.html"><i class="bi bi-chat-dots nav-icon"></i></a>
+    <a href="settings.html"><i class="bi bi-gear nav-icon"></i></a>
+  </div>
+</nav>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Google Translate API -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Translation functionality
+    const languageToggle = document.getElementById('languageToggle');
+    const languageDropdown = document.getElementById('languageDropdown');
+    const translatedElements = document.querySelectorAll('[data-translate]');
+    
+    // Language codes for supported languages
+    const supportedLanguages = {
+      'en': 'English',
+      'am': 'Amharic',
+      'om': 'Oromo',
+      'ti': 'Tigrinya'
+    };
+    
+    // Default translations (English)
+    const defaultTranslations = {
+      'welcome': 'Welcome',
+      'soil_moisture': 'Soil Moisture',
+      'temperature': 'Temperature',
+      'humidity': 'Humidity',
+      'pump_status': 'Pump Status',
+      'quick_actions': 'Quick Actions',
+      'water_now': 'Water Now',
+      'water_usage': 'Water Usage',
+      'today': 'Today',
+      'this_week': 'This Week',
+      'this_month': 'This Month',
+      'system_status': 'System Status',
+      'main_controller': 'Main Controller',
+      'moisture_sensor': 'Moisture Sensor',
+      'water_pump': 'Water Pump',
+      'weather_api': 'Weather API',
+      'online': 'Online',
+      'disabled': 'Disabled',
+      'last_updated': 'Last Updated',
+      'watering_tip': 'Watering Tip',
+      'default_tip': 'Early morning watering reduces evaporation and helps prevent plant diseases.'
+    };
+    
+    // Toggle language dropdown
+    languageToggle.addEventListener('click', function() {
+      languageDropdown.classList.toggle('show');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!languageToggle.contains(event.target) && !languageDropdown.contains(event.target)) {
+        languageDropdown.classList.remove('show');
+      }
+    });
+    
+    // Load saved language preference
+    const savedLanguage = localStorage.getItem('language') || 'en';
+    
+    // Function to translate the page
+    async function translatePage(targetLang) {
+      // Show translating state
+      document.body.classList.add('translating');
+      
+      try {
+        if (targetLang === 'en') {
+          // For English, use default translations
+          translatedElements.forEach(element => {
+            const key = element.getAttribute('data-translate');
+            if (defaultTranslations[key]) {
+              if (element.tagName === 'INPUT' || element.tagName === 'BUTTON') {
+                element.value = defaultTranslations[key];
+              } else {
+                element.textContent = defaultTranslations[key];
+              }
+            }
+          });
+          
+          // Update welcome message
+          updateWelcomeMessage();
+          
+          // Update watering tip
+          updateWateringTip();
+          
+          localStorage.setItem('language', 'en');
+          return;
+        }
+        
+        // For other languages, use Google Translate API
+        // Note: In a production environment, you would use the official Google Translate API
+        // This is a simplified approach that may have limitations
+        
+        // Create a list of all text to translate
+        const textsToTranslate = {};
+        translatedElements.forEach(element => {
+          const key = element.getAttribute('data-translate');
+          textsToTranslate[key] = defaultTranslations[key] || element.textContent;
+        });
+        
+        // In a real implementation, you would call the Google Translate API here
+        // For this example, we'll simulate translations with some hardcoded phrases
+        
+        const simulatedTranslations = {
+          'am': {
+            'welcome': 'እንኳን ደህና መጣህ!',
+            'soil_moisture': 'የአፈር እርጥበት',
+            'temperature': 'ሙቀት',
+            'humidity': 'እርጥበት',
+            'pump_status': 'የፓምፕ ሁኔታ',
+            'quick_actions': 'ፈጣን እርምጃዎች',
+            'water_now': 'አሁን አጠግብ',
+            'water_usage': 'የውሃ አጠቃቀም',
+            'today': 'ዛሬ',
+            'this_week': 'ይህ ሳምንት',
+            'this_month': 'ይህ ወር',
+            'system_status': 'የስርዓት ሁኔታ',
+            'main_controller': 'ዋና ኮንትሮለር',
+            'moisture_sensor': 'እርጥበት አሳሽ',
+            'water_pump': 'የውሃ ፓምፕ',
+            'weather_api': 'የአየር ሁኔታ API',
+            'online': 'በመስመር ላይ',
+            'disabled': 'የሚያገለግል',
+            'last_updated': 'የመጨረሻ ዝመና',
+            'watering_tip': 'የማጠጥ ምክር',
+            'default_tip': 'ጠዋት በጊዜ ማጠጣት የማጣራት መጠን �ቅል ያደርገዋል እና የእርሻ በሽታዎችን ለመከላከል ይረዳል።'
+          },
+          'om': {
+            'welcome': 'Baga nagaan dhuftan!',
+            'soil_moisture': 'Qilleensa dhoqqee',
+            'temperature': 'Ho\'a',
+            'humidity': 'Qilleensa',
+            'pump_status': 'Haala paampii',
+            'quick_actions': 'Tarkaanfii dafaa',
+            'water_now': 'Bishaan dhiqadhu',
+            'water_usage': 'Fayyadama bishaanii',
+            'today': 'Har\'a',
+            'this_week': 'Torban kana',
+            'this_month': 'Ji\'a kana',
+            'system_status': 'Haala sistamaa',
+            'main_controller': 'Kontoroolaa guddaa',
+            'moisture_sensor': 'Sensara qilleensaa',
+            'water_pump': 'Paampii bishaanii',
+            'weather_api': 'API haala qilleensaa',
+            'online': 'Online',
+            'disabled': 'Kan hin dandeenye',
+            'last_updated': 'Garaagarummaa dhiheenya',
+            'watering_tip': 'Gorsa bishaan dhiqannoo',
+            'default_tip': 'Bishaan dhiqannoo ganamaa yeroo gabaabaa qilleensa dhoqqee ittisuufi dhukkuba biqiltoota hir\'isuuf gargaara.'
+          },
+          'ti': {
+            'welcome': 'እንቋዕ ብደሓን መጻእኩም!',
+            'soil_moisture': 'ርጥብ ሓመድ',
+            'temperature': 'ሙቐት',
+            'humidity': 'ርጥብነት',
+            'pump_status': 'ስታተስ ፓምፕ',
+            'quick_actions': 'ቅልጡፍ ተግባራት',
+            'water_now': 'ሕጂ ማይ ምእታው',
+            'water_usage': 'ጥቕሚ ማይ',
+            'today': 'ሎሚ',
+            'this_week': 'ዝሓለፈ ሰሙን',
+            'this_month': 'ዝሓለፈ ወርሒ',
+            'system_status': 'ኩነታት ስርዓት',
+            'main_controller': 'ቀንዲ ኮንትሮለር',
+            'moisture_sensor': 'ርጥብ ሰርሰር',
+            'water_pump': 'ፓምፕ ማይ',
+            'weather_api': 'ኩነታት ኣየር API',
+            'online': 'ኣብ መስመር',
+            'disabled': 'ዘይተጠቅም',
+            'last_updated': 'ዝተረኽበ ሓበሬታ',
+            'watering_tip': 'ምክሪ ማይ ምእታው',
+            'default_tip': 'ኣብ ናይ ንግሆ ማይ ምእታው ምጥፋእ ርጥብነት ይንኪ እሞ ሕማማት ኣትክልቲ ከም ዘይጋጥም ይገብር።'
+          }
+        };
+        
+        // Apply translations
+        translatedElements.forEach(element => {
+          const key = element.getAttribute('data-translate');
+          const translation = simulatedTranslations[targetLang]?.[key] || defaultTranslations[key];
+          
+          if (translation) {
+            if (element.tagName === 'INPUT' || element.tagName === 'BUTTON') {
+              element.value = translation;
+            } else {
+              element.textContent = translation;
+            }
+          }
+        });
+        
+        // Update welcome message in the selected language
+        updateWelcomeMessage(targetLang);
+        
+        // Update watering tip in the selected language
+        updateWateringTip(targetLang);
+        
+        // Save language preference
+        localStorage.setItem('language', targetLang);
+        
+      } catch (error) {
+        console.error('Translation error:', error);
+      } finally {
+        document.body.classList.remove('translating');
+      }
+    }
+    
+    // Handle language selection
+    document.querySelectorAll('.language-option').forEach(option => {
+      option.addEventListener('click', function() {
+        const lang = this.getAttribute('data-lang');
+        translatePage(lang);
+        languageDropdown.classList.remove('show');
+      });
+    });
+    
+    // Update welcome message based on time of day and language
+    function updateWelcomeMessage(lang = 'en') {
+      const hour = new Date().getHours();
+      let greeting = '';
+      
+      if (lang === 'en') {
+        if (hour < 12) greeting = 'Good Morning';
+        else if (hour < 18) greeting = 'Good Afternoon';
+        else greeting = 'Good Evening';
+      } else if (lang === 'am') {
+        if (hour < 12) greeting = 'እንደምን አደርክ';
+        else if (hour < 18) greeting = 'እንደምን ዋልክ';
+        else greeting = 'እንደምን አመሸህ';
+      } else if (lang === 'om') {
+        if (hour < 12) greeting = 'Akkam bulte';
+        else if (hour < 18) greeting = 'Akkam oolte';
+        else greeting = 'Nagaa buli';
+      } else if (lang === 'ti') {
+        if (hour < 12) greeting = 'ከመይ ኣሎካ';
+        else if (hour < 18) greeting = 'ከመይ ዓቢኻ';
+        else greeting = 'ከመይ ዓረይካ';
+      }
+      
+      document.getElementById('welcomeMessage').textContent = greeting ? greeting + '!' : 'Welcome!';
+    }
+    
+    // Update watering tip based on language
+    function updateWateringTip(lang = 'en') {
+      const tips = {
+        'en': [
+          "Water plants in the early morning to reduce evaporation.",
+          "Check soil moisture before watering to avoid overwatering.",
+          "Use mulch to retain soil moisture and reduce water needs.",
+          "Water at the base of plants to minimize leaf wetness and disease.",
+          "Adjust watering frequency based on seasonal weather changes."
+        ],
+        'am': [
+          "የእርሻዎችን በጠዋት ማጠጣት የማጣራት መጠን ይቀንሳል።",
+          "ማጠጣትዎን ከመጀመርዎ በፊት የአፈር እርጥበት ያረጋግጡ።",
+          "የአፈር እርጥበት ለመጠበቅ እና የውሃ ፍላጎት ለመቀነስ ሙልች ይጠቀሙ።",
+          "የቅጠል እርጥበት እና በሽታ ለመከላከል በእርሻዎች መሠረት ውሃ ያጠግቡ።",
+          "በየወቅቱ የሚለዋወጥ የአየር ሁኔታ ላይ በመመርኮዝ የማጠጣት ድግግሞሽ ያስተካክሉ።"
+        ],
+        'om': [
+          "Biqiltota ganamaa yeroo gabaabaa bishaan dhiqachuun qilleensa dhoqqee ittisuuf gargaara.",
+          "Bishaan dhiqachuu keessaa dura qilleensa dhoqqee sirreessuun bishaan baay\'ee dhiqachuu irraa of eeggaa.",
+          "Maalcha fayyadamuun qilleensa dhoqqee ittisuufi bishaan dhiqannoo hir\'isuu danda\'a.",
+          "Dhukkuba biqiltootaafi qilleensa goggogaa irraa of eeggaachuuf biqiltota jala bishaan dhiqadhu.",
+          "Jijjiirrama yeroo waggaa irratti hundaa\'uun bishaan dhiqannoo jijjiiruu qaba."
+        ],
+        'ti': [
+          "ኣብ ንግሆ ማይ ምእታው ምጥፋእ ርጥብነት ንምንካይ።",
+          "ቅድሚ ማይ ምእታውካ ርጥብ ሓመድ ምርመራ።",
+          "ርጥብ ሓመድ ንምዕቋትን ናይ ማይ ድሌት ንምንካይን ሙልች ተጠቐም።",
+          "ኣብ መሰረት ኣትክልቲ ማይ ምእታው ንምንካይ ርጥብነት ቅጠልን ሕማምን።",
+          "ኣብ ናይ ወቕቲ ለውጢ ኣየር ተመርኲስካ ናይ ማይ ምእታው ድግግሞሽ ምምሕያሽ።"
+        ]
+      };
+      
+      const randomTip = tips[lang]?.[Math.floor(Math.random() * tips[lang].length)] || 
+                       tips['en'][Math.floor(Math.random() * tips['en'].length)];
+      
+      document.getElementById('wateringTip').textContent = randomTip;
+    }
+    
+    // Initialize with saved language
+    translatePage(savedLanguage);
+    
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const body = document.body;
+
+    // Water usage tracking variables
+    let waterUsage = {
+      today: 0,       // in liters
+      week: 0,        // in liters
+      month: 0,       // in liters
+      lastUpdated: null,
+      pumpActive: false,
+      pumpStartTime: null,
+      flowRate: 2.5   // liters per minute (adjust based on your pump)
+    };
+
+    // Load saved water usage from localStorage
+    function loadWaterUsage() {
+      const savedUsage = localStorage.getItem('waterUsage');
+      if (savedUsage) {
+        const parsed = JSON.parse(savedUsage);
+        
+        // Check if the saved data is from today
+        const today = new Date().toDateString();
+        if (parsed.lastUpdated === today) {
+          waterUsage.today = parsed.today || 0;
+          waterUsage.week = parsed.week || 0;
+          waterUsage.month = parsed.month || 0;
+        } else {
+          // Reset daily usage if it's a new day
+          waterUsage.today = 0;
+          waterUsage.week = parsed.week || 0;
+          waterUsage.month = parsed.month || 0;
+        }
+        
+        waterUsage.lastUpdated = today;
+      }
+      updateWaterUsageDisplay();
+    }
+
+    // Save water usage to localStorage
+    function saveWaterUsage() {
+      waterUsage.lastUpdated = new Date().toDateString();
+      localStorage.setItem('waterUsage', JSON.stringify({
+        today: waterUsage.today,
+        week: waterUsage.week,
+        month: waterUsage.month,
+        lastUpdated: waterUsage.lastUpdated
+      }));
+    }
+
+    // Update water usage display
+    function updateWaterUsageDisplay() {
+      document.getElementById('todayUsage').textContent = waterUsage.today.toFixed(1) + 'L';
+      document.getElementById('weekUsage').textContent = waterUsage.week.toFixed(1) + 'L';
+      document.getElementById('monthUsage').textContent = waterUsage.month.toFixed(1) + 'L';
+      
+      // Update progress bars (assuming 50L daily max, 350L weekly max, 1500L monthly max)
+      document.getElementById('todayProgress').style.width = Math.min(waterUsage.today / 50 * 100, 100) + '%';
+      document.getElementById('weekProgress').style.width = Math.min(waterUsage.week / 350 * 100, 100) + '%';
+      document.getElementById('monthProgress').style.width = Math.min(waterUsage.month / 1500 * 100, 100) + '%';
+    }
+
+    // Track pump activity and calculate water usage
+    function trackPumpActivity(isActive) {
+      const now = new Date();
+      
+      if (isActive && !waterUsage.pumpActive) {
+        // Pump just turned on
+        waterUsage.pumpActive = true;
+        waterUsage.pumpStartTime = now;
+      } else if (!isActive && waterUsage.pumpActive) {
+        // Pump just turned off - calculate usage
+        waterUsage.pumpActive = false;
+        if (waterUsage.pumpStartTime) {
+          const duration = (now - waterUsage.pumpStartTime) / 60000; // minutes
+          const usage = duration * waterUsage.flowRate;
+          
+          waterUsage.today += usage;
+          waterUsage.week += usage;
+          waterUsage.month += usage;
+          
+          updateWaterUsageDisplay();
+          saveWaterUsage();
+        }
+      }
+    }
+
+    // Manual water now button
+    document.getElementById('waterNowBtn').addEventListener('click', function() {
+      // This would trigger an API call to activate the pump in a real implementation
+      const currentLang = localStorage.getItem('language') || 'en';
+      let alertMessage = "Manual watering would be activated here. In this demo, it simulates 1 minute of watering.";
+      
+      if (currentLang === 'am') {
+        alertMessage = "እዚ ማእረር ውሃ እዚ ኣብዚ ምርኣይ እዩ። ኣብዚ ምሳሌ እዚ፣ 1 ደቒቕ ውሃ ይመስል።";
+      } else if (currentLang === 'om') {
+        alertMessage = "Bishaan dhiqannoo namaa asii irratti akka hojiirra oolu. Fakkeenya kana keessatti, daqiiqaa 1 bishaan dhiqachuu fakkeessu.";
+      } else if (currentLang === 'ti') {
+        alertMessage = "እዚ ማእረር ውሃ እዚ ኣብዚ ምርኣይ እዩ። ኣብዚ ምሳሌ እዚ፣ 1 ደቒቕ ውሃ ይመስል።";
+      }
+      
+      alert(alertMessage);
+      
+      // Simulate 1 minute of watering
+      const usage = 1 * waterUsage.flowRate;
+      waterUsage.today += usage;
+      waterUsage.week += usage;
+      waterUsage.month += usage;
+      
+      updateWaterUsageDisplay();
+      saveWaterUsage();
+    });
+
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let isDark = savedTheme ? savedTheme === 'dark' : systemPrefersDark;
+
+    function applyTheme() {
+      if (isDark) {
+        body.setAttribute('data-theme', 'dark');
+        themeIcon.className = 'bi bi-sun';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        body.removeAttribute('data-theme');
+        themeIcon.className = 'bi bi-moon-stars';
+        localStorage.setItem('theme', 'light');
+      }
+    }
+
+    applyTheme();
+
+    themeToggle.addEventListener('click', () => {
+      isDark = !isDark;
+      applyTheme();
+    });
+
+    // Load initial water usage
+    loadWaterUsage();
+
+    // Fetch Sensor Data
+    async function fetchSensorData() {
+      try {
+        const token = 'ZLcZBsKlBLl8vq5YaSpvAezTnEMoOg2K';
+
+        const [moistureRes, tempRes, humidityRes, pumpRes] = await Promise.all([
+          fetch(`https://blynk.cloud/external/api/get?token=${token}&v0`),
+          fetch(`https://blynk.cloud/external/api/get?token=${token}&v1`),
+          fetch(`https://blynk.cloud/external/api/get?token=${token}&v2`),
+          fetch(`https://blynk.cloud/external/api/get?token=${token}&D4`)
+        ]);
+
+        const soilMoisture = await moistureRes.text();
+        const temperature = await tempRes.text();
+        const humidity = await humidityRes.text();
+        const pumpValue = await pumpRes.text();
+
+        document.getElementById('soilMoisture').textContent = soilMoisture + '%';
+        document.getElementById('temperature').textContent = temperature + '°C';
+        document.getElementById('humidity').textContent = humidity + '%';
+        
+        const pumpActive = pumpValue === "1";
+        document.getElementById('pumpStatus').textContent = pumpActive ? "Active" : "Idle";
+        
+        // Track pump activity for water usage
+        trackPumpActivity(pumpActive);
+
+        const currentTime = new Date().toLocaleTimeString();
+        document.getElementById('lastUpdated').textContent = currentTime;
+
+      } catch (error) {
+        console.error('Error fetching Blynk sensor data:', error);
+      }
+    }
+
+    fetchSensorData();
+    setInterval(fetchSensorData, 60000); // Update every 60 seconds
+    
+    // Reset daily usage at midnight
+    function checkForDayChange() {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() === 0) {
+        waterUsage.today = 0;
+        updateWaterUsageDisplay();
+        saveWaterUsage();
+      }
+    }
+    setInterval(checkForDayChange, 60000); // Check every minute
+  });
+</script>
+</body>
+</html>
     // Reset daily usage at midnight
     function checkForDayChange() {
       const now = new Date();
