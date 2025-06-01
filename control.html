@@ -188,26 +188,28 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // Blynk Configuration
+  // Blynk Configuration - Match your ESP32 code
   const BLYNK_AUTH_TOKEN = "ZLcZBsKlBLl8vq5YaSpvAezTnEMoOg2K";
   const BLYNK_API_URL = "https://blynk.cloud/external/api/";
   
-  // Virtual Pins Configuration (adjust according to your Blynk setup)
+  // Virtual Pins Configuration (must match your ESP32 code)
   const PINS = {
-    SOIL_MOISTURE: "V0",
-    TEMPERATURE: "V1",
-    HUMIDITY: "V2",
-    PUMP_CONTROL: "V3",
-    AUTO_MODE: "D4",
-    SCHEDULE_START: "V5",
-    SCHEDULE_DURATION: "V6",
-    SCHEDULE_DAYS: "V7"
+    SOIL_MOISTURE: "V0",      // Soil moisture percentage
+    TEMPERATURE: "V1",        // Temperature in °C
+    HUMIDITY: "V2",           // Humidity percentage
+    AUTO_MODE: "V3",          // Auto mode switch (1=on, 0=off)
+    MANUAL_PUMP: "V4",        // Manual pump control (1=on, 0=off)
+    MOISTURE_THRESHOLD: "V5", // Moisture threshold for auto mode
+    SCHEDULE_START: "V6",     // Schedule start time (HH:MM)
+    SCHEDULE_DURATION: "V7",  // Schedule duration (minutes)
+    SCHEDULE_DAYS: "V8"       // Schedule days (comma separated 0-6)
   };
 
   // State variables
   let currentSettings = {
     autoMode: false,
     pumpStatus: false,
+    moistureThreshold: 30,
     schedule: {
       startTime: "08:00",
       duration: 15,
@@ -251,6 +253,31 @@
     const saveScheduleBtn = document.getElementById('saveSchedule');
     const toast = new bootstrap.Toast(document.querySelector('.toast'));
 
+    // Blynk API Helper Functions
+    async function getBlynkPinValue(pin) {
+      const url = `${BLYNK_API_URL}get?token=${BLYNK_AUTH_TOKEN}&${pin}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch pin value');
+        return await response.text();
+      } catch (error) {
+        console.error('Error getting pin value:', error);
+        return null;
+      }
+    }
+
+    async function setBlynkPinValue(pin, value) {
+      const url = `${BLYNK_API_URL}update?token=${BLYNK_AUTH_TOKEN}&${pin}=${value}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to update pin value');
+        return await response.text();
+      } catch (error) {
+        console.error('Error setting pin value:', error);
+        return null;
+      }
+    }
+
     // Load initial settings from Blynk
     async function loadSettings() {
       try {
@@ -265,7 +292,8 @@
 
         // Get control settings
         currentSettings.autoMode = (await getBlynkPinValue(PINS.AUTO_MODE)) === '1';
-        currentSettings.pumpStatus = (await getBlynkPinValue(PINS.PUMP_CONTROL)) === '1';
+        currentSettings.pumpStatus = (await getBlynkPinValue(PINS.MANUAL_PUMP)) === '1';
+        currentSettings.moistureThreshold = parseInt(await getBlynkPinValue(PINS.MOISTURE_THRESHOLD)) || 30;
         
         autoSwitch.checked = currentSettings.autoMode;
         pumpSwitch.checked = currentSettings.pumpStatus;
@@ -290,21 +318,6 @@
       }
     }
 
-    // Blynk API Helper Functions
-    async function getBlynkPinValue(pin) {
-      const url = `${BLYNK_API_URL}get?token=${BLYNK_AUTH_TOKEN}&${pin}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch pin value');
-      return await response.text();
-    }
-
-    async function setBlynkPinValue(pin, value) {
-      const url = `${BLYNK_API_URL}update?token=${BLYNK_AUTH_TOKEN}&${pin}=${value}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to update pin value');
-      return await response.text();
-    }
-
     // Event Listeners
     autoSwitch.addEventListener('change', async function() {
       currentSettings.autoMode = this.checked;
@@ -315,14 +328,14 @@
       if (this.checked && pumpSwitch.checked) {
         pumpSwitch.checked = false;
         currentSettings.pumpStatus = false;
-        await setBlynkPinValue(PINS.PUMP_CONTROL, '0');
+        await setBlynkPinValue(PINS.MANUAL_PUMP, '0');
       }
     });
 
     pumpSwitch.addEventListener('change', async function() {
       if (!autoSwitch.checked) {
         currentSettings.pumpStatus = this.checked;
-        await setBlynkPinValue(PINS.PUMP_CONTROL, this.checked ? '1' : '0');
+        await setBlynkPinValue(PINS.MANUAL_PUMP, this.checked ? '1' : '0');
       } else {
         // Don't allow manual control in auto mode
         this.checked = false;
@@ -360,20 +373,20 @@
       }
     });
 
-    // Refresh sensor data every 10 seconds
+    // Refresh sensor data every 2 seconds (matches ESP32 update interval)
     setInterval(async () => {
       try {
         const moisture = await getBlynkPinValue(PINS.SOIL_MOISTURE);
         const temp = await getBlynkPinValue(PINS.TEMPERATURE);
         const humidity = await getBlynkPinValue(PINS.HUMIDITY);
         
-        document.getElementById('soilMoisture').textContent = moisture ? `${moisture}%` : '--%';
-        document.getElementById('temperature').textContent = temp ? `${temp}°C` : '--°C';
-        document.getElementById('humidity').textContent = humidity ? `${humidity}%` : '--%';
+        if (moisture) document.getElementById('soilMoisture').textContent = `${moisture}%`;
+        if (temp) document.getElementById('temperature').textContent = `${temp}°C`;
+        if (humidity) document.getElementById('humidity').textContent = `${humidity}%`;
       } catch (error) {
         console.error('Error updating sensor data:', error);
       }
-    }, 1000);
+    }, 2000);
 
     // Initialize the app
     loadSettings();
